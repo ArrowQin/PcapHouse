@@ -1,0 +1,42 @@
+# Shared .dockerignore — keeps build context small and prevents stale
+# local state (node_modules, venvs, the dev SQLite DB, etc.) from leaking
+# into the image.
+
+# VCS / editor noise
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.DS_Store
+
+# Runtime state (managed via bind mounts in compose)
+.run
+data
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+
+# Local dev DB + uploads — we ship a clean image; real data lives in
+# the host bind mount declared in docker-compose.yml.
+backend/pcaphouse.db
+backend/pcaphouse.db-wal
+backend/pcaphouse.db-shm
+backend/uploads
+backend/tmp_gen
+
+# Frontend build artefacts — rebuilt inside the Dockerfile's first stage.
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Env files — secrets shouldn't land in the image; compose reads them
+# from the host at ``docker compose up`` time.
+.env
+.env.*
+!.env.example
+
+# Docs / misc that aren't needed at runtime
+README.md
+docker-compose.yml

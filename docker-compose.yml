@@ -1,0 +1,76 @@
+# docker-compose.yml — PcapHouse all-in-one stack.
+#
+# A single container runs the FastAPI backend + nginx that serves the
+# built frontend and reverse-proxies /api to uvicorn on localhost.
+# See backend/Dockerfile + backend/supervisord.conf for the process
+# layout inside the image.
+#
+# Persistent state is bind-mounted from the host so you can see/back up
+# the files directly on disk. The host path is controlled by
+# ``PCAPHOUSE_DATA_DIR`` (see .env.example); it defaults to ``./data``
+# inside this repo checkout. Two subdirectories are created there:
+#
+#   ${PCAPHOUSE_DATA_DIR}/db        — SQLite DB file (+WAL/SHM)
+#   ${PCAPHOUSE_DATA_DIR}/uploads   — uploaded & generated .pcap files
+#
+# Upgrade flow (handled by ./pcaphouse.sh docker-upgrade):
+#   1. git pull
+#   2. docker compose build --pull
+#   3. docker compose up -d
+# Bind mounts survive step 3, so the DB and uploaded pcaps persist across
+# upgrades with zero manual steps.
+
+services:
+  pcaphouse:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: pcaphouse:latest
+    container_name: pcaphouse
+    restart: unless-stopped
+
+    # Linux capabilities required by the pcap generator:
+    #   NET_ADMIN  — ``ip addr add/del`` on lo
+    #   NET_RAW    — tcpdump's packet sockets
+    # These are scoped to the container; they do NOT grant host privileges.
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    # Persistent state. Bind-mount from the host so users can browse /
+    # back up the files with regular shell tools. The default path
+    # ``./data`` puts state alongside the repo checkout, override via
+    # ``PCAPHOUSE_DATA_DIR=/srv/pcaphouse`` in .env (or the environment)
+    # to point at e.g. a dedicated data disk.
+    volumes:
+      - ${PCAPHOUSE_DATA_DIR:-./data}/db:/app/db
+      - ${PCAPHOUSE_DATA_DIR:-./data}/uploads:/app/uploads
+
+    # Stash the SQLite DB under /app/db (the volume) instead of /app
+    # (the image, which is rebuilt on every upgrade).
+    environment:
+      DATABASE_URL: "sqlite+aiosqlite:////app/db/pcaphouse.db"
+      # Frontend calls /api through the co-located nginx, so CORS never
+      # fires from the browser; we still set it for completeness in case
+      # someone hits the port directly from a different origin.
+      CORS_ORIGINS: '["http://localhost:8080","http://127.0.0.1:8080"]'
+
+    # The app is reachable at http://<host>:${PCAPHOUSE_HTTP_PORT:-8080}.
+    # Only nginx (:80 inside) is published; uvicorn stays on the
+    # container's loopback.
+    ports:
+      - "${PCAPHOUSE_HTTP_PORT:-8080}:80"
+
+    healthcheck:
+      # Hit the backend's /api/health through nginx, so this also
+      # verifies the proxy wiring — not just that uvicorn is alive.
+      # ``urllib`` is stdlib so no extra packages needed.
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1/api/health', timeout=2).status == 200 else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

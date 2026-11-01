@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ * Theme tokens - all colors declared as `R G B` triplets so that
+ * Tailwind can combine them with `<alpha-value>` for utilities
+ * like `bg-dark-700/50`.
+ * Switch themes by setting `data-theme="light|dark"` on <html>.
+ * ============================================================ */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Accent palette */
+  --color-primary: 59 130 246;
+  --color-primary-hover: 37 99 235;
+  --color-primary-dark: 29 78 216;
+  --color-success: 34 197 94;
+  --color-danger: 239 68 68;
+  --color-warning: 245 158 11;
+  --color-accent: 139 92 246;
+
+  /* Surfaces (darker → lighter) */
+  --color-bg-900: 11 14 20;    /* page background */
+  --color-bg-800: 15 18 25;    /* sidebar / header */
+  --color-bg-700: 26 31 46;    /* card */
+  --color-bg-600: 36 41 56;    /* card hover / input */
+  --color-bg-500: 42 48 64;    /* border emphasized */
+  --color-bg-400: 52 59 77;    /* scrollbar */
+
+  /* Text */
+  --color-fg: 255 255 255;
+  --color-muted: 148 163 184;
+  --color-muted-dark: 100 116 139;
+
+  /* Scrollbar */
+  --scrollbar-track: 15 18 25;
+  --scrollbar-thumb: 52 59 77;
+  --scrollbar-thumb-hover: 74 82 104;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Accent palette — slightly darker primary so contrast on white is readable */
+  --color-primary: 37 99 235;
+  --color-primary-hover: 29 78 216;
+  --color-primary-dark: 30 64 175;
+  --color-success: 22 163 74;
+  --color-danger: 220 38 38;
+  --color-warning: 217 119 6;
+  --color-accent: 124 58 237;
+
+  /* Surfaces (lighter → darker greys on white base).
+   * We intentionally keep `bg-dark-900` as the page background and
+   * `bg-dark-700` as the card, so existing class names still produce
+   * the expected visual hierarchy — just inverted. */
+  --color-bg-900: 248 250 252;   /* page background (slate-50) */
+  --color-bg-800: 255 255 255;   /* sidebar / header */
+  --color-bg-700: 255 255 255;   /* card */
+  --color-bg-600: 241 245 249;   /* card hover / input (slate-100) */
+  --color-bg-500: 226 232 240;   /* border emphasized (slate-200) */
+  --color-bg-400: 203 213 225;   /* scrollbar (slate-300) */
+
+  /* Text */
+  --color-fg: 15 23 42;          /* slate-900 */
+  --color-muted: 71 85 105;      /* slate-600 */
+  --color-muted-dark: 100 116 139;  /* slate-500 */
+
+  --scrollbar-track: 241 245 249;
+  --scrollbar-thumb: 203 213 225;
+  --scrollbar-thumb-hover: 148 163 184;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: rgb(var(--color-bg-900));
+  color: rgb(var(--color-fg));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--scrollbar-track));
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--scrollbar-thumb));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--scrollbar-thumb-hover));
+}
+
+/* Selection */
+::selection {
+  background-color: rgb(var(--color-primary) / 0.3);
+  color: rgb(var(--color-fg));
+}
+
+/* Focus outline */
+*:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+/* Smooth color transitions on themed surfaces */
+button, a, input, select, textarea {
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+              color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease,
+              transform 0.2s ease;
+}
